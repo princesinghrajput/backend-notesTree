@@ -83,9 +83,30 @@ const verifySession = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    // req.user is set by protect middleware
+    const { data, error } = await authService.getUserProfile(req.user.id);
+    
+    if (error) throw error;
+
+    res.status(200).json({
+      success: true,
+      profile: data
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to fetch profile'
+    });
+  }
+};
+
 module.exports = {
   signup,
   login,
   logout,
-  verifySession
+  verifySession,
+  getProfile
 }; 

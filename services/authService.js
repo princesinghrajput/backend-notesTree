@@ -1,7 +1,7 @@
 const { supabase } = require('../lib/supabase');
 
 const createUser = async (email, password, name) => {
-  const { data, error } = await supabase.auth.signUp({
+  const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -9,8 +9,20 @@ const createUser = async (email, password, name) => {
     }
   });
 
-  if (error) throw error;
-  return data;
+  if (authError) throw authError;
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert([
+      {
+        id: authData.user.id,
+        full_name: name,
+      }
+    ]);
+
+  if (profileError) throw profileError;
+
+  return authData;
 };
 
 const loginUser = async (email, password) => {
@@ -34,9 +46,21 @@ const verifyUser = async (token) => {
   return user;
 };
 
+const getUserProfile = async (userId) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 module.exports = {
   createUser,
   loginUser,
   logoutUser,
-  verifyUser
+  verifyUser,
+  getUserProfile
 }; 
